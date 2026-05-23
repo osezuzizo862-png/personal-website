@@ -750,7 +750,7 @@
             container.innerHTML = `
                 <div class="hero">
                     <div class="avatar-ring-container">
-                        <img src="images/微信图片_20260321140354_530_4(1).jpg" alt="${name}" class="avatar-img">
+                        <img src="/images/wechat-avatar.jpg" alt="${name}" class="avatar-img">
                     </div>
                     <div class="hero-content">
                         <h1 style="font-family: '演示流云楷', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;">${name}</h1>
@@ -802,7 +802,7 @@
                 <div class="skill-section-title">Skill</div>
                 <div class="skills-container">
                     <div class="skill-card-new" onclick="openMaterial(0, 'accordion')">
-                        <img src="images/AI应用.png" alt="AI应用" class="skill-card-img">
+                        <img src="/images/ai-apps.png" alt="AI应用" class="skill-card-img">
                         <div class="skill-card-content">
                             <div class="sc-header">01 / 工具赋能</div>
                             <h2 class="sc-title">AI应用</h2>
@@ -812,7 +812,7 @@
                     
                     <div class="skill-card-new" onclick="openMaterial(1, 'accordion')">
                         <!-- 修正为 .webp -->
-                        <img src="images/剪辑.webp" alt="剪辑" class="skill-card-img">
+                        <img src="/images/video-edit.webp" alt="剪辑" class="skill-card-img">
                         <div class="skill-card-content">
                             <div class="sc-header">02 / 视觉呈现</div>
                             <h2 class="sc-title">剪辑</h2>
@@ -821,7 +821,7 @@
                     </div>
                     
                     <div class="skill-card-new" onclick="openMaterial(2, 'accordion')">
-                        <img src="images/办公.png" alt="办公软件" class="skill-card-img">
+                        <img src="/images/office.png" alt="办公软件" class="skill-card-img">
                         <div class="skill-card-content">
                             <div class="sc-header">03 / 效率提升</div>
                             <h2 class="sc-title">办公软件</h2>
@@ -1067,7 +1067,7 @@
                 heroHeader.className = 'modal-hero-header';
                 
                 const beamHtml = isProjectorMode ? `
-                    <div class="projector-image-container"><img src="images/projector.png" alt="Projector"></div>
+                    <div class="projector-image-container"><img src="/images/projector.png" alt="Projector"></div>
                     <div class="projector-beam"></div>
                 ` : '';
                 const titleClass = isProjectorMode ? 'modal-hero-title projector-text-effect' : 'modal-hero-title';
@@ -1173,7 +1173,7 @@
             container.innerHTML = pptData.map((item, index) => `
                 <div class="carousel-item${index === 0 ? ' active' : ''}" data-index="${index}">
                     <div class="frame-wrapper">
-                        <img src="images/框.png" class="frame-overlay" alt="画框">
+                        <img src="/images/frame.png" class="frame-overlay" alt="画框">
                         <img src="${item.imageUrl}" class="ppt-content" alt="${item.altText}">
                     </div>
                 </div>
