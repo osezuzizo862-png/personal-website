@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "try { $d = [Console]::In.ReadToEnd() | ConvertFrom-Json; $p = [math]::Round($d.context_window.used_percentage, 1); $bar = [math]::Round($p / 10); $filled = '#' * $bar; $empty = '-' * (10 - $bar); Write-Output (\"  {0} | [{1}{2}] {3}%  \" -f $d.model.display_name, $filled, $empty, $p) } catch { Write-Output '' }"
+  }
+}
