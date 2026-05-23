@@ -742,6 +742,36 @@
         // resumeData 全局变量，由 fetchResumeData 赋值后供 openMaterial 使用
         let resumeData = {}
 
+        // copyWechat 必须挂到 window，因为 onclick="" 在 HTML 中是全局作用域调用
+        window.copyWechat = function copyWechat(wechatId) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(wechatId).then(() => {
+                    alert('✅ 微信号已复制：' + wechatId + '\n请打开微信，搜索该ID即可添加好友。');
+                }).catch(() => {
+                    // 降级方案：execCommand
+                    _fallbackCopy(wechatId);
+                });
+            } else {
+                _fallbackCopy(wechatId);
+            }
+        }
+
+        function _fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ 微信号已复制：' + text + '\n请打开微信，搜索该ID即可添加好友。');
+            } catch (err) {
+                alert('复制失败，请手动复制微信号：' + text);
+            }
+            document.body.removeChild(textarea);
+        }
+
         function renderHero() {
             const container = document.getElementById('hero-container');
             const { name, title, contact } = resumeData.personal;
