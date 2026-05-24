@@ -15,6 +15,25 @@
                  url('fonts/方正粗黑宋简体.otf') format('opentype');
             font-weight: normal;
             font-style: normal;
+            font-display: swap;
+        }
+
+        /* 引入演示流云楷 */
+        @font-face {
+            font-family: '演示流云楷';
+            src: url('fonts/演示流云楷.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* 引入云峰飞云体 */
+        @font-face {
+            font-family: '云峰飞云体';
+            src: url('fonts/云峰飞云体.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
         }
 
         :root {
@@ -752,8 +771,12 @@
             return (arr || []).map(fixImagePath);
         }
 
-        // ===== 从 Supabase 拉取数据 =====
-        async function fetchResumeData() {
+        // ===== localStorage 缓存键名与有效期 =====
+        const CACHE_KEY = 'resumeData_cache'
+        const CACHE_EXPIRE_MS = 10 * 60 * 1000 // 10分钟
+
+        // ===== 从 Supabase 拉取原始数据并格式化 =====
+        async function fetchFromSupabase() {
             const [
                 { data: personalRows, error: e1 },
                 { data: highlightRows, error: e2 },
@@ -807,6 +830,43 @@
                     altText: r.alt_text
                 }))
             }
+        }
+
+        // ===== 带缓存的数据获取（方案A核心） =====
+        async function fetchResumeData() {
+            // 尝试读取本地缓存
+            try {
+                const raw = localStorage.getItem(CACHE_KEY)
+                if (raw) {
+                    const { data, timestamp } = JSON.parse(raw)
+                    const isValid = (Date.now() - timestamp) < CACHE_EXPIRE_MS
+                    if (isValid && data) {
+                        console.log('✅ 使用本地缓存，秒开！')
+                        // 后台静默刷新，不阻塞页面渲染
+                        fetchFromSupabase().then(freshData => {
+                            localStorage.setItem(CACHE_KEY, JSON.stringify({ data: freshData, timestamp: Date.now() }))
+                            console.log('🔄 后台数据已静默更新')
+                        }).catch(() => {})
+                        return data
+                    }
+                }
+            } catch (e) {
+                // 缓存读取失败，忽略，继续走网络请求
+                console.warn('缓存读取失败，降级到网络请求', e)
+            }
+
+            // 无缓存或缓存已过期，走网络请求
+            console.log('🌐 首次加载，从 Supabase 拉取数据...')
+            const data = await fetchFromSupabase()
+
+            // 写入缓存
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }))
+            } catch (e) {
+                console.warn('缓存写入失败（可能存储已满）', e)
+            }
+
+            return data
         }
 
         function highlightText(text) {
@@ -957,7 +1017,7 @@
                     validImages.sort(() => Math.random() - 0.5);
                     grid[r][c] = validImages[0];
 
-                    html += `<div class="ppt-img-wrapper"><img src="${grid[r][c]}" class="ppt-img-card" draggable="false" /></div>`;
+                    html += `<div class="ppt-img-wrapper"><img src="${grid[r][c]}" class="ppt-img-card" loading="lazy" draggable="false" /></div>`;
                 }
             }
             return html;
@@ -1461,20 +1521,20 @@
             // 激活滑动阻尼
             initSmoothScrolling();
 
-            // 控制开屏动画逻辑
+            // 控制开屏动画逻辑（数据加载完即关闭，最多等300ms）
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
                 if(splash) {
                     splash.classList.add('slide-up');
                     setTimeout(() => splash.remove(), 800); 
                 }
-            }, 1200); 
+            }, 300); 
             
             // 顺延打字机效果
             setTimeout(() => {
                 const introText = document.getElementById('intro-text');
                 if (introText) typeWriter(introText, '大一学生，一名AI编程爱好者', 150);
-            }, 1800); 
+            }, 1100); 
         });
     </script>
 </body>
