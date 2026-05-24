@@ -1390,7 +1390,7 @@
                     if (previewData) {
                         try {
                             const imgSrcs = JSON.parse(previewData);
-                            
+
                             if (imgSrcs && imgSrcs.length > 0) {
                                 if (numText === '01' && imgSrcs.length >= 2) {
                                     previewEl.innerHTML = `
@@ -1403,7 +1403,7 @@
                                     const firstImageSrc = imgSrcs[0];
                                     previewEl.innerHTML = `<img src="${firstImageSrc}" alt="作品预览">`;
                                 }
-                                
+
                                 previewEl.classList.add('visible');
                                 previewEl.style.left = e.clientX + 'px';
                                 previewEl.style.top = e.clientY + 'px';
@@ -1427,6 +1427,21 @@
                     previewEl.classList.remove('visible');
                     previewEl.style.transform = 'translate(-50%, -50%) scale(0.9) rotate(0deg)';
                 });
+            });
+        }
+
+        // 预加载所有高亮项目的预览图，确保鼠标悬停时图片已在缓存中
+        function preloadPreviewImages() {
+            resumeData.highlights.forEach(item => {
+                if (item.preview && item.preview.length > 0) {
+                    const img = new Image();
+                    img.src = item.preview[0];
+                    // 编号01使用双图并排，第二张也需预加载
+                    if (item.num === '01' && item.preview.length >= 2) {
+                        const img2 = new Image();
+                        img2.src = item.preview[1];
+                    }
+                }
             });
         }
 
@@ -1485,9 +1500,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 先从 Supabase 拉取数据，赋值给全局 resumeData
+            // 并行等待：数据拉取 + 字体加载，避免页面显现后字体切换闪烁
             try {
-                resumeData = await fetchResumeData()
+                const [data] = await Promise.all([
+                    fetchResumeData(),
+                    document.fonts.ready
+                ]);
+                resumeData = data;
             } catch (err) {
                 console.error('❌ 数据加载失败：', err)
                 // 数据加载失败时，强制关闭开屏动画，防止页面卡死
@@ -1501,7 +1520,7 @@
                     <div style="padding: 3rem; text-align: center; color: #ef4444;">
                         <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">⚠️ 数据加载失败</h2>
                         <p style="color: #94a3b8; font-size: 0.9rem;">请检查 Vercel 项目设置中是否已配置环境变量：<br>
-                        <code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">VITE_SUPABASE_URL</code> 和 
+                        <code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">VITE_SUPABASE_URL</code> 和
                         <code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">VITE_SUPABASE_ANON_KEY</code></p>
                         <p style="color: #64748b; font-size: 0.8rem; margin-top: 1rem;">错误详情：${err.message}</p>
                     </div>
@@ -1514,27 +1533,26 @@
             // 数据就绪后再渲染页面
             renderHero();
             renderHighlights();
+            preloadPreviewImages();
             renderAccordion();
             renderPPTWorks(resumeData.pptWorks);
             initTheme(); initScroll(); initAvatarTilt(); initScrollReveal();
-            
+
             // 激活滑动阻尼
             initSmoothScrolling();
 
-            // 控制开屏动画逻辑（数据加载完即关闭，最多等300ms）
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                if(splash) {
-                    splash.classList.add('slide-up');
-                    setTimeout(() => splash.remove(), 800); 
-                }
-            }, 300); 
-            
-            // 顺延打字机效果
+            // 字体已加载完毕，关闭开屏动画，不会出现字体切换闪烁
+            const splash = document.getElementById('splash-screen');
+            if(splash) {
+                splash.classList.add('slide-up');
+                setTimeout(() => splash.remove(), 800);
+            }
+
+            // 开屏滑出后启动打字机效果
             setTimeout(() => {
                 const introText = document.getElementById('intro-text');
                 if (introText) typeWriter(introText, '大一学生，一名AI编程爱好者', 150);
-            }, 1100); 
+            }, 800);
         });
     </script>
 </body>
