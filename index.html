@@ -698,6 +698,60 @@
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabase
 
+        // ===== 旧图片路径 → 新路径映射（前端兜底修正） =====
+        const IMAGE_PATH_MAP = {
+            'images/微信图片_20260321160029_532_4.jpg':  '/images/wechat-img-20260321-532.jpg',
+            'images/微信图片_20260328111053_563_4.jpg':  '/images/wechat-img-20260328-563.jpg',
+            'images/微信图片_20260328111059_564_4.jpg':  '/images/wechat-img-20260328-564.jpg',
+            'images/微信图片_20260328111259_565_4.png':  '/images/wechat-img-20260328-565.png',
+            'images/微信图片_20260328111408_566_4.png':  '/images/wechat-img-20260328-566.png',
+            'images/微信图片_20260328112006_568_4.png':  '/images/wechat-img-20260328-568.png',
+            'images/微信图片_20260328113429_570_4.png':  '/images/wechat-img-20260328-570.png',
+            'images/微信图片_20260328140240_571_4.jpg':  '/images/wechat-img-20260328-571.jpg',
+            'images/微信图片_20260328140258_572_4.jpg':  '/images/wechat-img-20260328-572.jpg',
+            'images/微信图片_20260330_579_4.png':        '/images/wechat-img-20260330-579.png',
+            'images/Snipaste_2026-03-23_21-04-16.png':  '/images/snipaste-2026-03-23-21-04-16.png',
+            'images/Snipaste_2026-03-23_21-04-30.png':  '/images/snipaste-2026-03-23-21-04-30.png',
+            'images/Snipaste_2026-03-23_21-04-44.png':  '/images/snipaste-2026-03-23-21-04-44.png',
+            'images/Snipaste_2026-03-28_11-57-54.png':  '/images/snipaste-2026-03-28-11-57-54.png',
+            'images/Snipaste_2026-03-28_11-58-58.png':  '/images/snipaste-2026-03-28-11-58-58.png',
+            'images/Snipaste_2026-03-28_13-36-19.png':  '/images/snipaste-2026-03-28-13-36-19.png',
+            'images/Snipaste_2026-03-28_13-38-26.png':  '/images/snipaste-2026-03-28-13-38-26.png',
+            'images/Snipaste_2026-03-28_14-01-15.png':  '/images/snipaste-2026-03-28-14-01-15.png',
+            'images/Snipaste_2026-03-28_16-15-49.png':  '/images/snipaste-2026-03-28-16-15-49.png',
+            'images/Snipaste_2026-03-28_16-17-35.png':  '/images/snipaste-2026-03-28-16-17-35.png',
+            'images/Snipaste_2026-03-28_16-17-55.png':  '/images/snipaste-2026-03-28-16-17-55.png',
+            'images/Snipaste_2026-03-28_16-18-14.png':  '/images/snipaste-2026-03-28-16-18-14.png',
+            'images/Snipaste_2026-03-28_16-18-57.png':  '/images/snipaste-2026-03-28-16-18-57.png',
+            'images/Snipaste_2026-03-29_23-23-30.png':  '/images/snipaste-2026-03-29-23-23-30.png',
+            'images/Snipaste_2026-03-29_23-23-59.png':  '/images/snipaste-2026-03-29-23-23-59.png',
+            'images/Snipaste_2026-03-29_23-24-12.png':  '/images/snipaste-2026-03-29-23-24-12.png',
+            'images/Snipaste_2026-03-29_23-24-28.png':  '/images/snipaste-2026-03-29-23-24-28.png',
+            'images/Snipaste_2026-03-29_23-24-41.png':  '/images/snipaste-2026-03-29-23-24-41.png',
+            'images/Snipaste_2026-03-29_23-24-58.png':  '/images/snipaste-2026-03-29-23-24-58.png',
+            'images/Snipaste_2026-03-29_23-25-18.png':  '/images/snipaste-2026-03-29-23-25-18.png',
+            'images/Snipaste_2026-03-29_23-25-29.png':  '/images/snipaste-2026-03-29-23-25-29.png',
+            'images/Snipaste_2026-03-29_23-25-39.png':  '/images/snipaste-2026-03-29-23-25-39.png',
+            'images/Snipaste_2026-03-29_23-25-51.png':  '/images/snipaste-2026-03-29-23-25-51.png',
+            'images/Snipaste_2026-03-29_23-26-16.png':  '/images/snipaste-2026-03-29-23-26-16.png',
+            'images/Snipaste_2026-03-30_18-58-36.png':  '/images/snipaste-2026-03-30-18-58-36.png',
+            'images/Snipaste_2026-03-30_20-27-19.png':  '/images/snipaste-2026-03-30-20-27-19.png',
+        };
+
+        function fixImagePath(p) {
+            if (!p) return p;
+            // 如果在映射表里，直接返回新路径
+            if (IMAGE_PATH_MAP[p]) return IMAGE_PATH_MAP[p];
+            // 如果已经是绝对路径（/images/xxx）直接返回
+            if (p.startsWith('/')) return p;
+            // 否则加上前导斜杠
+            return '/' + p;
+        }
+
+        function fixImagePaths(arr) {
+            return (arr || []).map(fixImagePath);
+        }
+
         // ===== 从 Supabase 拉取数据 =====
         async function fetchResumeData() {
             const [
@@ -740,16 +794,16 @@
                     titleEn: r.title_en,
                     titleCn: r.title_cn,
                     dateTop: r.date_top,
-                    preview: r.preview || []
+                    preview: fixImagePaths(r.preview)
                 })),
                 accordions: (skillRows || []).map(r => ({
                     num: r.num,
                     titleEn: r.title_en,
                     titleCn: r.title_cn,
-                    preview: r.preview || []
+                    preview: fixImagePaths(r.preview)
                 })),
                 pptWorks: (pptRows || []).map(r => ({
-                    imageUrl: r.image_url,
+                    imageUrl: fixImagePath(r.image_url),
                     altText: r.alt_text
                 }))
             }
