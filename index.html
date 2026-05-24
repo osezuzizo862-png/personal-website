@@ -687,20 +687,41 @@
     <script type="module">
         import { createClient } from '@supabase/supabase-js'
 
-        const supabase = createClient(
-            import.meta.env.VITE_SUPABASE_URL,
-            import.meta.env.VITE_SUPABASE_ANON_KEY
-        )
+        // ===== Supabase 配置检查 =====
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            console.error('❌ Supabase 环境变量未配置！请在 Vercel 项目设置中添加 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY')
+        }
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabase
 
         // ===== 从 Supabase 拉取数据 =====
         async function fetchResumeData() {
-            const [{ data: personalRows }, { data: highlightRows }, { data: skillRows }, { data: pptRows }] = await Promise.all([
+            const [
+                { data: personalRows, error: e1 },
+                { data: highlightRows, error: e2 },
+                { data: skillRows, error: e3 },
+                { data: pptRows, error: e4 }
+            ] = await Promise.all([
                 supabase.from('personal_info').select('*').limit(1),
                 supabase.from('highlights').select('*').order('id'),
                 supabase.from('skills').select('*').order('id'),
                 supabase.from('ppt_works').select('*').order('id')
             ])
+
+            // 检查是否有错误
+            if (e1 || e2 || e3 || e4) {
+                const err = e1 || e2 || e3 || e4
+                console.error('❌ Supabase 查询错误：', err.message)
+                throw new Error('数据库连接失败：' + err.message)
+            }
+
+            if (!personalRows || personalRows.length === 0) {
+                throw new Error('personal_info 表中无数据')
+            }
 
             const p = personalRows[0]
             return {
@@ -714,14 +735,14 @@
                         email: p.email.split('@')
                     }
                 },
-                highlights: highlightRows.map(r => ({
+                highlights: (highlightRows || []).map(r => ({
                     num: r.num,
                     titleEn: r.title_en,
                     titleCn: r.title_cn,
                     dateTop: r.date_top,
                     preview: r.preview || []
                 })),
-                accordions: skillRows.map(r => ({
+                accordions: (skillRows || []).map(r => ({
                     num: r.num,
                     titleEn: r.title_en,
                     titleCn: r.title_cn,
@@ -1351,7 +1372,30 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             // 先从 Supabase 拉取数据，赋值给全局 resumeData
-            resumeData = await fetchResumeData()
+            try {
+                resumeData = await fetchResumeData()
+            } catch (err) {
+                console.error('❌ 数据加载失败：', err)
+                // 数据加载失败时，强制关闭开屏动画，防止页面卡死
+                const splash = document.getElementById('splash-screen')
+                if (splash) {
+                    splash.classList.add('slide-up')
+                    setTimeout(() => splash.remove(), 800)
+                }
+                // 在页面上显示错误提示
+                document.getElementById('hero-container').innerHTML = `
+                    <div style="padding: 3rem; text-align: center; color: #ef4444;">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">⚠️ 数据加载失败</h2>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">请检查 Vercel 项目设置中是否已配置环境变量：<br>
+                        <code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">VITE_SUPABASE_URL</code> 和 
+                        <code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">VITE_SUPABASE_ANON_KEY</code></p>
+                        <p style="color: #64748b; font-size: 0.8rem; margin-top: 1rem;">错误详情：${err.message}</p>
+                    </div>
+                `
+                initTheme()
+                initSmoothScrolling()
+                return
+            }
 
             // 数据就绪后再渲染页面
             renderHero();
