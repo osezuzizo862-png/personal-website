@@ -1500,11 +1500,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 并行等待：数据拉取 + 字体加载，避免页面显现后字体切换闪烁
+            // 强制预加载所有自定义字体，避免页面显现后字体切换闪烁
+            const customFonts = ['1rem "演示流云楷"', '1rem "云峰飞云体"', '1rem "方正粗黑宋简体"'];
             try {
                 const [data] = await Promise.all([
                     fetchResumeData(),
-                    document.fonts.ready
+                    ...customFonts.map(f => document.fonts.load(f))
                 ]);
                 resumeData = data;
             } catch (err) {
