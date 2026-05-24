@@ -41,11 +41,11 @@ PPT 画布使用 3×3 瓦片网格（每瓦片 5×4 图片），通过 CSS grid 
 
 **轮播** — `#works-exhibition` 区域展示 PPT 作品图片，每张图片叠加在 `框.png` 外框上，通过 opacity 切换实现渐显渐出。
 
-**开屏动画** — 白色全屏 splash，最多等待 300ms 后 slide-up 消失，然后触发打字机效果。数据加载失败时强制关闭开屏并显示错误提示。
+**开屏动画** — 白色全屏 splash，等待数据拉取和自定义字体（演示流云楷/云峰飞云体/方正粗黑宋简体）全部加载完毕后 slide-up 消失，然后触发打字机效果。使用 `document.fonts.load()` 主动触发字体下载并等待完成，避免页面显现后字体从系统字体切换到自定义字体的闪烁（FOUT）。数据加载失败时强制关闭开屏并显示错误提示。
 
 **主题系统** — 暗色/亮色切换，通过 `localStorage` 持久化，默认跟随系统 `prefers-color-scheme`。CSS 变量集中在 `:root` 和 `html.dark` 中定义。
 
-**悬浮预览** — `#floating-preview` 在鼠标悬停于高亮行时跟随光标显示缩略图。编号为 01 的行使用 `mockup-frame` 并排展示两张图片，其余行展示单张图片。
+**悬浮预览** — `#floating-preview` 在鼠标悬停于高亮行时跟随光标显示缩略图。编号为 01 的行使用 `mockup-frame` 并排展示两张图片，其余行展示单张图片。`preloadPreviewImages()` 在页面渲染后立即用 `new Image()` 将所有预览图预加载到浏览器缓存，确保悬停时图片瞬间显示。
 
 ## 其他交互功能
 
@@ -66,4 +66,5 @@ PPT 画布使用 3×3 瓦片网格（每瓦片 5×4 图片），通过 CSS grid 
 
 - `.env` 中包含 Supabase 密钥。当前目录是备份，原项目应使用 `.env.local` 且不提交到 git。
 - `转场动画/` 目录是独立的页面转场实验（Vue SPA 和无刷新跳转），与主站无关。
-- 字体文件较大（`.ttf`/`.ttc`），加载可能影响首屏性能。已加 `font-display: swap` 优化。
+- 字体文件较大（`.ttf`/`.ttc`），加载可能影响首屏性能。已通过 `document.fonts.load()` 在开屏期间预加载，`font-display: swap` 作为兜底。
+- `sharp` 已安装为 devDependency，可用于图片压缩优化。之前用过 `compress-images.js` 脚本（已删除），需要时可重新编写。
